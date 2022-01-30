@@ -1,13 +1,14 @@
 import {Request,Response} from "express";
 import {RegisterValidation} from "../validation/register.validation";
+import {getManager,getRepository} from "typeorm";
+import {User} from "../entity/user.entity";
+import bcryptjs from "bcryptjs";
 
-
-export const Register = (req:Request,res:Response) => {
+export const Register = async (req:Request,res:Response) => {
   const body = req.body;
-  const password = req.body.password;
-  const repassword = req.body.password_confirmation;
 
-  var mailformat = "/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/";
+
+
   const email = req.body.email;
 
   const {error} = RegisterValidation.validate(body);
@@ -17,16 +18,27 @@ export const Register = (req:Request,res:Response) => {
              return res.status(400).send(error.details);
             }
 
-  if(password!=repassword)  // check password match
+  if(req.body.password!==req.body.password_confirmation)  // check password match
 {
   return res.status(400).send({
     message: "Password do not match"
   });
 }
 
+const repository = getRepository(User);
+
+const {password,...user} = await repository.save({
+  first_name: body.first_name,
+  last_name: body.last_name,
+  email: body.email,
+  password: await bcryptjs.hash(body.password,10)
+
+
+})
 
 
 
 
-res.send(body);
+
+res.send(user);
 }
