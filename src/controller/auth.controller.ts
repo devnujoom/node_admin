@@ -36,9 +36,38 @@ const {password,...user} = await repository.save({
 
 })
 
-
-
-
-
 res.send(user);
+}
+
+export const Login = async (req:Request,res:Response) => {
+
+const repository = getRepository(User);
+const user = await repository.findOne({email: req.body.email});
+
+
+if(!user)
+{
+  return res.status(400).send({
+    message:"This User Not Available"
+  });
+}
+
+
+
+
+if(await bcryptjs.compare(req.body.password,user.password))
+{
+
+  const {password,...data} = user;
+  res.send(data);
+}
+else{
+  res.status(400).send({
+    message:"Invalid credentials"
+  });
+}
+
+
+
+
 }
