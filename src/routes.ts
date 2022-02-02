@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {Register,Login} from "./controller/auth.controller";
+import {Register,Login,AuntenticateUser} from "./controller/auth.controller";
 
 export const routes = (router:Router)=>{
 
@@ -8,5 +8,8 @@ router.post('/register',Register);
 
 //register
 router.post('/login',Login);
+
+//AuthenticateUser
+router.get('/user',AuntenticateUser);
 
 }

@@ -3,7 +3,10 @@ import {RegisterValidation} from "../validation/register.validation";
 import {getManager,getRepository} from "typeorm";
 import {User} from "../entity/user.entity";
 import bcryptjs from "bcryptjs";
+import {sign,verify} from "jsonwebtoken";
+import jwt_decode from 'jwt-decode';
 
+// Register User
 export const Register = async (req:Request,res:Response) => {
   const body = req.body;
 
@@ -39,11 +42,12 @@ const {password,...user} = await repository.save({
 res.send(user);
 }
 
+
+// Login
 export const Login = async (req:Request,res:Response) => {
 
 const repository = getRepository(User);
 const user = await repository.findOne({email: req.body.email});
-
 
 if(!user)
 {
@@ -52,22 +56,97 @@ if(!user)
   });
 }
 
-
-
-
 if(await bcryptjs.compare(req.body.password,user.password))
 {
+  // created payload
+  const payload = {
+    id: user.id
+
+  }
+
+  // created Token
+  const token = sign(payload,"secret");
+
+  res.cookie("jwt",token,{
+    httpOnly: true,
+    maxAge:24*60*60*1000
+
+  });
 
   const {password,...data} = user;
-  res.send(data);
+
+
+  res.send({
+
+    message:"Success"
+
+  }
+  );
 }
-else{
+else
+{
   res.status(400).send({
     message:"Invalid credentials"
   });
 }
 
+}
 
+// Autenticate User
+
+export const AuntenticateUser = async (req:Request,res:Response) => {
+
+const jwt = req.cookies['jwt'];
+
+//const payload: any = verify(jwt,"secret");
+//let decoded = jwt_decode(jwt);
+
+const payload: any = verify(jwt,"secret", (err, decoded) => {
+     if (err) {
+       return res.status(401).send({
+         message: "Unauthorized!"
+       });
+     }
+
+     return decoded.id;
+
+
+   });
+
+   const repository = getRepository(User);
+   const {password,...user} = await repository.findOne({id:payload});
+   res.send(user);
+/*
+
+if(!payload)
+{
+  return res.status(401).send({
+
+    message: "Invalid User"
+  });
+}
+else{
+  const user =payload;
+
+  const response =     {
+        login:true,
+        data: user,
+        message: "login Success"
+      }
+  res.json(
+response.data
+
+  );
+}
+*/
+//const repository = getRepository(User);
+
+//const user = await repository.findOne(payload);
+
+//res.send(user);
+/*
+
+*/
 
 
 }
