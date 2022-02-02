@@ -92,14 +92,17 @@ else
 
 }
 
+
+
 // Autenticate User
 
-export const AuntenticateUser = async (req:Request,res:Response) => {
+export const AuntenticateUser1 = async (req:Request,res:Response) => {
 
 const jwt = req.cookies['jwt'];
 
 //const payload: any = verify(jwt,"secret");
 //let decoded = jwt_decode(jwt);
+
 
 const payload: any = verify(jwt,"secret", (err, decoded) => {
      if (err) {
@@ -112,6 +115,8 @@ const payload: any = verify(jwt,"secret", (err, decoded) => {
 
 
    });
+
+
 
    const repository = getRepository(User);
    const {password,...user} = await repository.findOne({id:payload});
@@ -147,6 +152,37 @@ response.data
 /*
 
 */
+
+
+}
+
+
+export const AuntenticateUser = async (req:Request,res:Response) => {
+
+const jwt = req.cookies['jwt'];
+
+if(!jwt)
+{
+  return res.status(401).send({
+
+    message: "Invalid User"
+  });
+}
+
+const payload: any = verify(jwt,"secret");
+
+if(!payload)
+{
+  return res.status(401).send({
+
+    message: "Invalid User"
+  });
+}
+
+   const repository = getRepository(User);
+   const {password,...user} = await repository.findOne({id:payload.id});
+   res.send(user);
+
 
 
 }
