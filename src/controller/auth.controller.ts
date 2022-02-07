@@ -30,6 +30,15 @@ export const Register = async (req:Request,res:Response) => {
 
 const repository = getRepository(User);
 
+const userExists = await repository.findOne({email: req.body.email});
+
+if(userExists)
+{
+  return res.status(400).send({
+    message:"User already exists"
+  });
+}
+
 const {password,...user} = await repository.save({
   first_name: body.first_name,
   last_name: body.last_name,
@@ -65,7 +74,7 @@ if(await bcryptjs.compare(req.body.password,user.password))
   }
 
   // created Token
-  const token = sign(payload,"secret");
+  const token = sign(payload,process.env.SECRET_KEY);
 
   res.cookie("jwt",token,{
     httpOnly: true,
@@ -93,96 +102,64 @@ else
 }
 
 
-
-// Autenticate User
-
-export const AuntenticateUser1 = async (req:Request,res:Response) => {
-
-const jwt = req.cookies['jwt'];
-
-//const payload: any = verify(jwt,"secret");
-//let decoded = jwt_decode(jwt);
-
-
-const payload: any = verify(jwt,"secret", (err, decoded) => {
-     if (err) {
-       return res.status(401).send({
-         message: "Unauthorized!"
-       });
-     }
-
-     return decoded.id;
-
-
-   });
-
-
-
-   const repository = getRepository(User);
-   const {password,...user} = await repository.findOne({id:payload});
-   res.send(user);
-/*
-
-if(!payload)
-{
-  return res.status(401).send({
-
-    message: "Invalid User"
-  });
-}
-else{
-  const user =payload;
-
-  const response =     {
-        login:true,
-        data: user,
-        message: "login Success"
-      }
-  res.json(
-response.data
-
-  );
-}
-*/
-//const repository = getRepository(User);
-
-//const user = await repository.findOne(payload);
-
-//res.send(user);
-/*
-
-*/
-
-
-}
-
-
+// authenticated Stable version
 export const AuntenticateUser = async (req:Request,res:Response) => {
 
-const jwt = req.cookies['jwt'];
+const {password,...user} = req['user'];
+res.send(user);
 
-if(!jwt)
-{
-  return res.status(401).send({
-
-    message: "Invalid User"
-  });
 }
 
-const payload: any = verify(jwt,"secret");
 
-if(!payload)
-{
-  return res.status(401).send({
+// logout User
+export const Logout = async (req:Request,res:Response) => {
+//const jwt = req.cookies['jwt'];
+//res.send(jwt);
+res.cookie('jwt','',{maxAge:0})
 
-    message: "Invalid User"
-  });
+res.send({
+  message: 'Logout Successfully'
+})
 }
 
-   const repository = getRepository(User);
-   const {password,...user} = await repository.findOne({id:payload.id});
-   res.send(user);
+
+// update UserInfo
+export const UpdateInfo = async (req:Request,res:Response) => {
+
+const user = req['user'];
+//console.log(user);
+const repository = getRepository(User);
+await repository.update(user.id,req.body);
+const {password,...data} = await repository.findOne(user.id);
+if(data)
+{
+  console.log("Updated Successfully");
+}
+res.send(data);
+
+}
 
 
+// update Password
+export const UpdatePassword = async (req:Request,res:Response) => {
+
+const user = req['user'];
+
+if(req.body.password!==req.body.password_confirmation)
+{
+  return res.status(400).send({
+    message:"Password Do Not Match."
+  });
+
+}
+const repository = getRepository(User);
+
+await repository.update(user.id,{
+  password: await bcryptjs.hash(req.body.password,10)
+});
+
+const {password,...data} = user;
+//console.log(data);
+res.send(data);
 
 }
