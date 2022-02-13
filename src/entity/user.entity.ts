@@ -1,4 +1,5 @@
-import {Entity,PrimaryGeneratedColumn,Column} from "typeorm";
+import {Entity,PrimaryGeneratedColumn,Column,JoinColumn,ManyToOne} from "typeorm";
+import {Role} from "./role.entity";
 
 @Entity()
 
@@ -27,6 +28,8 @@ export class User {
   @Column()
   ispublished: boolean;
 
-
+  @ManyToOne(() => Role)
+  @JoinColumn({name: 'role_id'})
+  role: Role;
 
 }
